@@ -6,7 +6,7 @@ import json
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from .models import validate_number
 
@@ -15,6 +15,53 @@ OCEAN = "#193B55"
 LAND = "#8B9B91"
 COUNTRY_BORDER = "#344A50"
 STATE_BORDER = "#596E70"
+GRID_INTERVAL = 10
+
+
+def coordinate_label(value, latitude=False):
+    if value == 0:
+        return "0°"
+    direction = ("N" if value > 0 else "S") if latitude else ("E" if value > 0 else "W")
+    return f"{abs(value):g}°{direction}"
+
+
+def grid_ticks(lower, upper):
+    start = math.ceil(lower / GRID_INTERVAL) * GRID_INTERVAL
+    return range(start, math.floor(upper / GRID_INTERVAL) * GRID_INTERVAL + 1, GRID_INTERVAL)
+
+
+def draw_graticule(image, basin):
+    """Draw a subtle 10-degree grid and readable Source Sans edge labels."""
+    draw = ImageDraw.Draw(image, "RGBA")
+    font = ImageFont.truetype(str(Path(__file__).parent / "data" / "fonts" /
+                                 "SourceSans3-Regular.ttf"), 18)
+    latitudes = grid_ticks(basin.south, basin.north)
+    longitudes = grid_ticks(basin.west, basin.east)
+    for latitude in latitudes:
+        _, y = project(basin, latitude, basin.west)
+        for x in range(0, WIDTH, 12):
+            draw.line((x, y, min(x + 5, WIDTH - 1), y), fill=(225, 236, 241, 65))
+    for longitude in longitudes:
+        x, _ = project(basin, basin.north, longitude)
+        for y in range(0, HEIGHT, 12):
+            draw.line((x, y, x, min(y + 5, HEIGHT - 1)), fill=(225, 236, 241, 65))
+
+    def label(text, x, y):
+        box = draw.textbbox((0, 0), text, font=font)
+        width, height = box[2] - box[0], box[3] - box[1]
+        x = max(7, min(x - width / 2, WIDTH - width - 7))
+        y = max(7, min(y - height / 2, HEIGHT - height - 7))
+        draw.rounded_rectangle((x - 4, y - 3, x + width + 4, y + height + 3),
+                               radius=3, fill=(16, 33, 44, 225))
+        draw.text((x - box[0], y - box[1]), text, font=font, fill="#EAF1F5")
+
+    for latitude in latitudes:
+        _, y = project(basin, latitude, basin.west)
+        # Reserve the bottom row for longitude labels at the corner.
+        label(coordinate_label(latitude, latitude=True), 28, min(y, HEIGHT - 45))
+    for longitude in longitudes:
+        x, _ = project(basin, basin.south, longitude)
+        label(coordinate_label(longitude), x, HEIGHT - 17)
 
 
 def probability_color(probability):
@@ -90,6 +137,9 @@ def render_outlook(outlook, period="7d"):
         for line in boundary_lines(layer):
             draw.line([project(basin, lat, lon) for lon, lat in line],
                       fill=color, width=width)
+
+    draw_graticule(image, basin)
+    draw = ImageDraw.Draw(image)
 
     for disturbance in outlook.disturbances:
         color = probability_color(getattr(disturbance, f"probability_{period}"))

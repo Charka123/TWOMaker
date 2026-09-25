@@ -51,6 +51,9 @@ no network connection, map service, or API key is required at runtime. The simpl
 equirectangular basemap uses the configured basin bounds. Coastlines are simplified
 and very small islands may be omitted. See `two/data/README.md` for source details.
 PNG files contain no title, legend, or forecast text and are unofficial products.
+Latitude and longitude grid lines are spaced every 10 degrees, with hemisphere
+labels along the left and bottom edges in bundled Source Sans 3 Regular. The
+grid sits beneath disturbance markings. Font licensing is in `two/data/fonts/`.
 
 Use the Flask URL above rather than opening `two/templates/index.html` directly
 or serving it with a static preview/Live Server. Flask renders the template and

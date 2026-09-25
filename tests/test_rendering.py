@@ -5,7 +5,8 @@ from PIL import Image
 
 from two import create_app
 from two.models import Basin, Disturbance, Outlook
-from two.rendering import HEIGHT, WIDTH, probability_color, project, render_outlook
+from two.rendering import (HEIGHT, WIDTH, coordinate_label, grid_ticks,
+                           probability_color, project, render_outlook)
 
 
 class RenderingTests(unittest.TestCase):
@@ -28,6 +29,22 @@ class RenderingTests(unittest.TestCase):
                                    (40, "#FF6A00"), (60, "#FF6A00"),
                                    (61, "#FF0202"), (100, "#FF0202")]:
             self.assertEqual(probability_color(probability), color)
+
+    def test_coordinate_labels_and_grid_bounds(self):
+        self.assertEqual(coordinate_label(-80), "80°W")
+        self.assertEqual(coordinate_label(20), "20°E")
+        self.assertEqual(coordinate_label(-10, latitude=True), "10°S")
+        self.assertEqual(coordinate_label(60, latitude=True), "60°N")
+        self.assertEqual(coordinate_label(0), "0°")
+        self.assertEqual(list(grid_ticks(-97, -62)), [-90, -80, -70])
+
+    def test_grid_is_rendered_over_ocean(self):
+        with Image.open(BytesIO(render_outlook(Outlook(self.basin)))) as image:
+            x, y = (int(value) for value in project(self.basin, 30, -30))
+            colors = {image.getpixel((px, py))
+                      for px in range(x - 2, x + 14) for py in range(y - 2, y + 14)}
+            self.assertIn((25, 59, 85), colors)
+            self.assertGreater(len(colors), 1)
 
     def test_great_lakes_are_water_and_nearby_land_is_preserved(self):
         png = render_outlook(Outlook(self.basin))
