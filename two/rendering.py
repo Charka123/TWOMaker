@@ -34,9 +34,10 @@ def project(basin, latitude, longitude):
     )
 
 
-@lru_cache(maxsize=1)
-def land_polygons():
-    path = Path(__file__).parent / "data" / "ne_50m_land.geojson"
+@lru_cache(maxsize=2)
+def map_polygons(layer):
+    filenames = {"land": "ne_50m_land.geojson", "lakes": "ne_50m_lakes.geojson"}
+    path = Path(__file__).parent / "data" / filenames[layer]
     features = json.loads(path.read_text())["features"]
     polygons = []
     for feature in features:
@@ -75,11 +76,14 @@ def render_outlook(outlook, period="7d"):
     basin = outlook.basin
     image = Image.new("RGB", (WIDTH, HEIGHT), OCEAN)
     draw = ImageDraw.Draw(image)
-    for polygon in land_polygons():
-        for index, ring in enumerate(polygon):
-            points = [project(basin, lat, lon) for lon, lat in ring]
-            draw.polygon(points, fill=LAND if index == 0 else OCEAN)
-            draw.line(points, fill="#C3CEC5", width=1)
+    # Lake interior rings represent islands; preserve them as land.
+    # Draw borders and disturbances afterwards so those overlays remain visible.
+    for layer, exterior, interior in [("land", LAND, OCEAN), ("lakes", OCEAN, LAND)]:
+        for polygon in map_polygons(layer):
+            for index, ring in enumerate(polygon):
+                points = [project(basin, lat, lon) for lon, lat in ring]
+                draw.polygon(points, fill=exterior if index == 0 else interior)
+                draw.line(points, fill="#C3CEC5", width=1)
 
     for layer, color, width in [("us_states", STATE_BORDER, 1),
                                  ("countries", COUNTRY_BORDER, 2)]:

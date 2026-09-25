@@ -29,6 +29,18 @@ class RenderingTests(unittest.TestCase):
                                    (61, "#FF0202"), (100, "#FF0202")]:
             self.assertEqual(probability_color(probability), color)
 
+    def test_great_lakes_are_water_and_nearby_land_is_preserved(self):
+        png = render_outlook(Outlook(self.basin))
+        with Image.open(BytesIO(png)) as image:
+            for name, lat, lon in [
+                ("Superior", 47.5, -87.5), ("Michigan", 43.5, -87),
+                ("Huron", 44.5, -82.5), ("Erie", 42, -81),
+                ("Ontario", 43.7, -77.8),
+            ]:
+                with self.subTest(lake=name):
+                    self.assertEqual(self.pixel(image, lat, lon), (25, 59, 85))
+            self.assertEqual(self.pixel(image, 43.5, -85), (139, 155, 145))
+
     def test_png_and_selected_period(self):
         for period, color in [("7d", (255, 2, 2)), ("48h", (255, 255, 0))]:
             with self.image(period=period) as image:

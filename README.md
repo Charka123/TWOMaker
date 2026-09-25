@@ -46,7 +46,7 @@ Markings use the selected horizon: below 40% is `#FFFF00`, 40–60% inclusive is
 and arrows use the same color. Arrow endpoints follow the existing model.
 
 The renderer uses Pillow and bundled public-domain Natural Earth 1:50m land,
-country border, and U.S. state boundary layers;
+lake, country border, and U.S. state boundary layers;
 no network connection, map service, or API key is required at runtime. The simple
 equirectangular basemap uses the configured basin bounds. Coastlines are simplified
 and very small islands may be omitted. See `two/data/README.md` for source details.
