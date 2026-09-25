@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tropical Weather Outlook Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">TWOMaker</p>
+      <h1>Tropical Weather Outlook Generator</h1>
+      <p>Create a custom outlook. This is an unofficial tool; entries are not NHC or government forecasts.</p>
+    </header>
+    <section aria-labelledby="basin-heading">
+      <h2 id="basin-heading">Outlook basin</h2>
+      <label for="basin">Basin</label>
+      <select id="basin">
+        {% for basin in basins %}
+        <option value="{{ basin.id }}">{{ basin.name }}</option>
+        {% endfor %}
+      </select>
+      {% for basin in basins %}
+      <p>{{ basin.name }} bounds: {{ basin.south }}°–{{ basin.north }}° latitude, {{ basin.west }}°–{{ basin.east }}° longitude.</p>
+      {% endfor %}
+      <p>Use negative longitudes for west.</p>
+    </section>
+    <section aria-labelledby="add-heading">
+      <h2 id="add-heading">Add disturbance</h2>
+      <form id="disturbance-form">
+        <label>Name <input name="name" required maxlength="120"></label>
+        <div class="row">
+          <label>Latitude (°) <input name="latitude" type="number" min="-90" max="90" step="any" required></label>
+          <label>Longitude (°) <input name="longitude" type="number" min="-180" max="180" step="any" required></label>
+        </div>
+        <label>Description <textarea name="description" rows="4" required maxlength="5000"></textarea></label>
+        <div class="row">
+          <label>48-hour formation probability (%) <input name="probability_48h" type="number" min="0" max="100" step="1" required></label>
+          <label>7-day formation probability (%) <input name="probability_7d" type="number" min="0" max="100" step="1" required></label>
+        </div>
+        <p id="error" role="alert"></p>
+        <button type="submit">Add disturbance</button>
+      </form>
+    </section>
+    <section aria-labelledby="outlook-heading">
+      <h2 id="outlook-heading">Current disturbances</h2>
+      <p>Entries stay on this page until you reload or close it.</p>
+      <div id="disturbances" aria-live="polite"><p>No disturbances yet.</p></div>
+    </section>
+  </main>
+</body>
+</html>

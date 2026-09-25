@@ -1,0 +1,10 @@
+[
+  {
+    "id": "north-atlantic",
+    "name": "North Atlantic",
+    "south": 0,
+    "north": 60,
+    "west": -100,
+    "east": 0
+  }
+]
