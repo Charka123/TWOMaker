@@ -19,6 +19,12 @@ and whole-number 48-hour and 7-day formation probabilities (0–100%). Negative
 longitudes indicate west. Entries must fall inside the configured basin bounds.
 You can remove entries; page data is held in memory and is lost on reload.
 
+Use the Flask URL above rather than opening `two/templates/index.html` directly
+or serving it with a static preview/Live Server. Flask renders the template and
+provides the API. If the basin selector displays literal `{{ basin.name }}`, you
+are viewing the unrendered template. The selector currently has one option:
+North Atlantic.
+
 ## Structure
 
 - `two/models.py`: framework-independent Basin, Outlook, and Disturbance dataclasses.

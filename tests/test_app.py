@@ -55,6 +55,9 @@ class RouteTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"North Atlantic", response.data)
+        self.assertIn(b'<option value="north-atlantic">North Atlantic</option>', response.data)
+        self.assertNotIn(b"{{", response.data)
+        self.assertNotIn(b"{%", response.data)
         self.assertIn(b"unofficial", response.data)
         for path in ["/static/app.js", "/static/style.css"]:
             with self.client.get(path) as asset:
