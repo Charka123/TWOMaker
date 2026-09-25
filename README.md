@@ -30,7 +30,25 @@ Every type includes a name, description, both probabilities, and a formation
 area specified by south/north latitude and west/east longitude bounds. These
 rectangles are a simple initial data representation, not rendered map shapes.
 Both the area and any X position must be within the basin. Area boundaries count
-as inside. The interface displays these details as text; it does not draw markings.
+as inside.
+
+## Basin images
+
+After adding disturbances, select the 7-day (default) or 48-hour probability
+horizon and click **Generate image**. The preview and **Download PNG** link show
+a 1200×720 basin image with coastlines and disturbance markings only. An empty
+outlook generates a plain basin map. Adding/removing disturbances or changing
+the horizon clears the previous preview so it cannot be mistaken for current data.
+
+Markings use the selected horizon: below 40% is `#FFFF00`, 40–60% inclusive is
+`#FF6A00`, and above 60% is `#FF0202`. Areas are rectangular outlines; X markers
+and arrows use the same color. Arrow endpoints follow the existing model.
+
+The renderer uses Pillow and a bundled public-domain Natural Earth land dataset;
+no network connection, map service, or API key is required at runtime. The simple
+equirectangular basemap uses the configured basin bounds. Coastlines are coarse
+and small islands may be omitted. See `two/data/README.md` for source details.
+PNG files contain no title, legend, or forecast text and are unofficial products.
 
 Use the Flask URL above rather than opening `two/templates/index.html` directly
 or serving it with a static preview/Live Server. Flask renders the template and
@@ -44,6 +62,7 @@ North Atlantic.
 - `two/data/basins.json`: configurable basin names and rectangular geographic bounds.
 - `two/config.py`: loads and validates basin configuration.
 - `two/routes.py`: single page and stateless `POST /api/outlook` validation endpoint.
+- `two/rendering.py`: basin and disturbance PNG rendering, independent of Flask.
 - `two/templates/` and `two/static/`: HTML, CSS, and plain JavaScript interface.
 
 The API accepts `basin_id` and a `disturbances` array with `name`, `latitude`,
@@ -59,8 +78,11 @@ server as well as in the form. Alternate JSON configuration paths may be supplie
 through the application factory's `BASINS_PATH` config key. Current rectangular
 bounds do not support crossing the antimeridian.
 
-There is no database, persistence, interactive map, text product generation,
-image generation, or export yet. This tool does not produce official NHC or
+`POST /api/outlook/image` accepts the same outlook payload plus optional `period`
+(`7d` or `48h`) and returns a PNG attachment, or a JSON error with HTTP 400.
+
+There is no database, persistence, interactive map, or text product generation
+yet. This tool does not produce official NHC or
 government forecasts.
 
 ## Tests

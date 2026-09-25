@@ -72,6 +72,23 @@
       <p>Entries stay on this page until you reload or close it.</p>
       <div id="disturbances" aria-live="polite"><p>No disturbances yet.</p></div>
     </section>
+    <section aria-labelledby="image-heading">
+      <h2 id="image-heading">Basin image</h2>
+      <label>Color markings by
+        <select id="image-period">
+          <option value="7d">7-day formation probability</option>
+          <option value="48h">48-hour formation probability</option>
+        </select>
+      </label>
+      <p>Low (&lt;40%): yellow · Medium (40–60%): orange · High (&gt;60%): red.</p>
+      <p>The image includes the basin coastline and added disturbances only. It is an unofficial custom outlook.</p>
+      <button type="button" id="generate-image">Generate image</button>
+      <p id="image-status" role="status"></p>
+      <div id="image-result" hidden>
+        <img id="outlook-image" alt="">
+        <a id="download-image">Download PNG</a>
+      </div>
+    </section>
   </main>
 </body>
 </html>

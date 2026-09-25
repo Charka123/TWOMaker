@@ -2,6 +2,26 @@ const form = document.querySelector('#disturbance-form');
 const basin = document.querySelector('#basin');
 const list = document.querySelector('#disturbances');
 const error = document.querySelector('#error');
+const imagePeriod = document.querySelector('#image-period');
+const imageButton = document.querySelector('#generate-image');
+const imageStatus = document.querySelector('#image-status');
+const imageResult = document.querySelector('#image-result');
+const imagePreview = document.querySelector('#outlook-image');
+const imageDownload = document.querySelector('#download-image');
+let imageUrl = null;
+let imageRevision = 0;
+
+function invalidateImage() {
+  imageRevision += 1;
+  imageResult.hidden = true;
+  imageStatus.textContent = '';
+  imagePreview.removeAttribute('src');
+  imageDownload.removeAttribute('href');
+  if (imageUrl) URL.revokeObjectURL(imageUrl);
+  imageUrl = null;
+}
+imagePeriod.addEventListener('change', invalidateImage);
+basin.addEventListener('change', invalidateImage);
 let disturbances = [];
 const marking = document.querySelector('#marking-type');
 const position = document.querySelector('#x-position');
@@ -21,6 +41,7 @@ marking.addEventListener('change', updateMarkingFields);
 updateMarkingFields();
 
 function render() {
+  invalidateImage();
   list.replaceChildren();
   if (!disturbances.length) {
     const empty = document.createElement('p');
@@ -96,5 +117,37 @@ form.addEventListener('submit', async (event) => {
   } finally {
     submit.disabled = false;
     list.querySelectorAll('button').forEach(button => { button.disabled = false; });
+  }
+});
+
+imageButton.addEventListener('click', async () => {
+  invalidateImage();
+  const revision = imageRevision;
+  const period = imagePeriod.value;
+  imageButton.disabled = true;
+  imageStatus.textContent = 'Generating image…';
+  try {
+    const response = await fetch('/api/outlook/image', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({basin_id: basin.value, disturbances, period}),
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || 'Could not generate image.');
+    }
+    const blob = await response.blob();
+    if (revision !== imageRevision) return;
+    imageUrl = URL.createObjectURL(blob);
+    imagePreview.src = imageUrl;
+    imagePreview.alt = `${basin.selectedOptions[0].text} basin with ${disturbances.length} disturbance markings colored by ${period === '7d' ? '7-day' : '48-hour'} formation probability. Unofficial outlook.`;
+    imageDownload.href = imageUrl;
+    imageDownload.download = `${basin.value}-${period}-outlook.png`;
+    imageResult.hidden = false;
+    imageStatus.textContent = 'Image ready.';
+  } catch (failure) {
+    if (revision === imageRevision) imageStatus.textContent = failure.message || 'Could not generate image. Please try again.';
+  } finally {
+    imageButton.disabled = false;
   }
 });

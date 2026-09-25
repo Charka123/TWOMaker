@@ -13,6 +13,7 @@ input, select, textarea { display: block; width: 100%; font: inherit; color: inh
 textarea { resize: vertical; }
 fieldset { border: 1px solid #d1dfe7; border-radius: 5px; margin: 0 0 1rem; padding: 1rem; min-width: 0; }
 legend { font-weight: 600; }
+#outlook-image { display: block; width: 100%; height: auto; margin: 1rem 0; border-radius: 5px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 button { font: inherit; cursor: pointer; color: white; background: #08676d; border: 0; border-radius: 5px; padding: .7rem 1rem; }
 button:disabled { opacity: .6; cursor: wait; }
