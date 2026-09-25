@@ -13,6 +13,8 @@ from .models import validate_number
 WIDTH, HEIGHT = 1200, 720
 OCEAN = "#193B55"
 LAND = "#8B9B91"
+COUNTRY_BORDER = "#344A50"
+STATE_BORDER = "#596E70"
 
 
 def probability_color(probability):
@@ -34,7 +36,7 @@ def project(basin, latitude, longitude):
 
 @lru_cache(maxsize=1)
 def land_polygons():
-    path = Path(__file__).parent / "data" / "ne_110m_land.geojson"
+    path = Path(__file__).parent / "data" / "ne_50m_land.geojson"
     features = json.loads(path.read_text())["features"]
     polygons = []
     for feature in features:
@@ -44,6 +46,26 @@ def land_polygons():
         elif geometry["type"] == "MultiPolygon":
             polygons.extend(geometry["coordinates"])
     return polygons
+
+
+@lru_cache(maxsize=2)
+def boundary_lines(layer):
+    """Load national borders or U.S.-only state borders from bundled GeoJSON."""
+    filenames = {
+        "countries": "ne_50m_admin_0_boundary_lines_land.geojson",
+        "us_states": "ne_50m_admin_1_states_provinces_lines.geojson",
+    }
+    path = Path(__file__).parent / "data" / filenames[layer]
+    lines = []
+    for feature in json.loads(path.read_text())["features"]:
+        if layer == "us_states" and feature["properties"].get("ADM0_A3") != "USA":
+            continue
+        geometry = feature["geometry"]
+        if geometry["type"] == "LineString":
+            lines.append(geometry["coordinates"])
+        elif geometry["type"] == "MultiLineString":
+            lines.extend(geometry["coordinates"])
+    return lines
 
 
 def render_outlook(outlook, period="7d"):
@@ -58,6 +80,12 @@ def render_outlook(outlook, period="7d"):
             points = [project(basin, lat, lon) for lon, lat in ring]
             draw.polygon(points, fill=LAND if index == 0 else OCEAN)
             draw.line(points, fill="#C3CEC5", width=1)
+
+    for layer, color, width in [("us_states", STATE_BORDER, 1),
+                                 ("countries", COUNTRY_BORDER, 2)]:
+        for line in boundary_lines(layer):
+            draw.line([project(basin, lat, lon) for lon, lat in line],
+                      fill=color, width=width)
 
     for disturbance in outlook.disturbances:
         color = probability_color(getattr(disturbance, f"probability_{period}"))

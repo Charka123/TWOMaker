@@ -36,7 +36,8 @@ as inside.
 
 After adding disturbances, select the 7-day (default) or 48-hour probability
 horizon and click **Generate image**. The preview and **Download PNG** link show
-a 1200×720 basin image with coastlines and disturbance markings only. An empty
+a 1200×720 basin image with coastlines, country borders, U.S. state boundaries,
+and disturbance markings. An empty
 outlook generates a plain basin map. Adding/removing disturbances or changing
 the horizon clears the previous preview so it cannot be mistaken for current data.
 
@@ -44,10 +45,11 @@ Markings use the selected horizon: below 40% is `#FFFF00`, 40–60% inclusive is
 `#FF6A00`, and above 60% is `#FF0202`. Areas are rectangular outlines; X markers
 and arrows use the same color. Arrow endpoints follow the existing model.
 
-The renderer uses Pillow and a bundled public-domain Natural Earth land dataset;
+The renderer uses Pillow and bundled public-domain Natural Earth 1:50m land,
+country border, and U.S. state boundary layers;
 no network connection, map service, or API key is required at runtime. The simple
-equirectangular basemap uses the configured basin bounds. Coastlines are coarse
-and small islands may be omitted. See `two/data/README.md` for source details.
+equirectangular basemap uses the configured basin bounds. Coastlines are simplified
+and very small islands may be omitted. See `two/data/README.md` for source details.
 PNG files contain no title, legend, or forecast text and are unofficial products.
 
 Use the Flask URL above rather than opening `two/templates/index.html` directly
