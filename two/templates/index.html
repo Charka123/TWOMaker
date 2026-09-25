@@ -48,7 +48,13 @@
         <p id="marking-help">An area of interest without an X or arrow.</p>
         <fieldset>
           <legend>Formation area</legend>
-          <p>Enter rectangular bounds for now. All bounds must be inside the selected basin.</p>
+          <label>Area shape
+            <select name="area_shape">
+              <option value="ellipse">Curved (oval)</option>
+              <option value="rectangle">Rectangle</option>
+            </select>
+          </label>
+          <p>Enter the outer bounds of the area. An oval curves inside these bounds, touching each side at its midpoint. All bounds must be inside the selected basin.</p>
           <div class="row">
             <label>South latitude (°) <input name="south" type="number" min="-90" max="90" step="any" required></label>
             <label>North latitude (°) <input name="north" type="number" min="-90" max="90" step="any" required></label>

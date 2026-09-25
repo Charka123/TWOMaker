@@ -71,6 +71,20 @@ class RenderingTests(unittest.TestCase):
             self.assertEqual(self.pixel(image, 20, -45), (255, 2, 2))
             self.assertNotEqual(self.pixel(image, 15, -45), (255, 2, 2))
 
+    def test_ellipse_has_curved_outline_and_supports_each_marking(self):
+        for marking in ["area_only", "x_in_area", "x_to_area"]:
+            item = self.item | {"marking_type": marking,
+                               "area": self.item["area"] | {"shape": "ellipse"}}
+            if marking == "area_only":
+                item.update(latitude=None, longitude=None)
+            elif marking == "x_to_area":
+                item["longitude"] = -60
+            with self.subTest(marking=marking), self.image(item) as image:
+                self.assertEqual(self.pixel(image, 20, -45), (255, 2, 2))
+                self.assertNotEqual(self.pixel(image, 20, -50), (255, 2, 2))
+                if marking != "area_only":
+                    self.assertEqual(self.pixel(image, item["latitude"], item["longitude"]), (255, 2, 2))
+
     def test_arrow_connects_external_x_to_area(self):
         item = self.item | {"marking_type": "x_to_area", "longitude": -60}
         with self.image(item) as image:

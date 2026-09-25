@@ -27,8 +27,11 @@ Choose one of three disturbance marking types:
 - **X within an area**: current X position inside the formation area; no arrow.
 
 Every type includes a name, description, both probabilities, and a formation
-area specified by south/north latitude and west/east longitude bounds. These
-rectangles are a simple initial data representation, not rendered map shapes.
+area specified by south/north latitude and west/east longitude bounds. Choose
+**Curved (oval)** (the form default) or **Rectangle**. Ovals fit inside the bounds,
+touching each side at its midpoint. X-position validation follows the actual
+shape, so the corners of an oval's bounding rectangle are outside the area.
+Ovals are axis-aligned; freehand curves and rotation are not supported yet.
 Both the area and any X position must be within the basin. Area boundaries count
 as inside.
 
@@ -42,7 +45,7 @@ outlook generates a plain basin map. Adding/removing disturbances or changing
 the horizon clears the previous preview so it cannot be mistaken for current data.
 
 Markings use the selected horizon: below 40% is `#FFFF00`, 40–60% inclusive is
-`#FF6A00`, and above 60% is `#FF0202`. Areas are rectangular outlines; X markers
+`#FF6A00`, and above 60% is `#FF0202`. Areas use oval or rectangular outlines; X markers
 and arrows use the same color. Arrow endpoints follow the existing model.
 
 The renderer uses Pillow and bundled public-domain Natural Earth 1:50m land,
@@ -73,7 +76,9 @@ North Atlantic.
 The API accepts `basin_id` and a `disturbances` array with `name`, `latitude`,
 `longitude`, `description`, `probability_48h`, `probability_7d`, `marking_type`, and
 `area`. The required `marking_type` is `area_only`, `x_to_area`, or `x_in_area`.
-`area` contains numeric `south`, `north`, `west`, and `east` bounds. For `area_only`,
+`area` contains numeric `south`, `north`, `west`, and `east` bounds, plus `shape`
+(`ellipse` or `rectangle`). Omitted shapes default to `rectangle` for compatibility;
+API responses include the shape explicitly. For `area_only`,
 omit latitude/longitude or set both to null; other types require both coordinates.
 `Disturbance.from_dict()` reconstructs nested area data; the `arrow` property
 derives endpoints for future renderers without duplicating stored coordinates.

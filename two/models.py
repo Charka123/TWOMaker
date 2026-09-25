@@ -42,14 +42,17 @@ class Basin:
 
 @dataclass(frozen=True)
 class FormationArea:
-    """Rectangular formation area; independent from future map rendering."""
+    """Rectangular or elliptical area within geographic bounds."""
 
     south: float
     north: float
     west: float
     east: float
+    shape: str = "rectangle"
 
     def __post_init__(self):
+        if self.shape not in ("rectangle", "ellipse"):
+            raise ValueError("Area shape must be rectangle or ellipse.")
         validate_number("Area southern bound", self.south, -90, 90)
         validate_number("Area northern bound", self.north, -90, 90)
         validate_number("Area western bound", self.west, -180, 180)
@@ -58,7 +61,14 @@ class FormationArea:
             raise ValueError("Area bounds must be ordered south to north and west to east.")
 
     def contains(self, latitude, longitude):
-        return self.south <= latitude <= self.north and self.west <= longitude <= self.east
+        if not (self.south <= latitude <= self.north and self.west <= longitude <= self.east):
+            return False
+        if self.shape == "ellipse":
+            lat, lon = self.center
+            distance = ((latitude - lat) / ((self.north - self.south) / 2)) ** 2
+            distance += ((longitude - lon) / ((self.east - self.west) / 2)) ** 2
+            return distance <= 1 + 1e-12
+        return True
 
     @property
     def center(self):

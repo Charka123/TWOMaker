@@ -58,7 +58,7 @@ function render() {
       location.textContent += ` · X: ${item.latitude}°, ${item.longitude}°`;
     }
     const area = document.createElement('p');
-    area.textContent = `Formation area: ${item.area.south}° to ${item.area.north}° latitude; ${item.area.west}° to ${item.area.east}° longitude.`;
+    area.textContent = `${item.area.shape === 'ellipse' ? 'Oval' : 'Rectangular'} formation area: ${item.area.south}° to ${item.area.north}° latitude; ${item.area.west}° to ${item.area.east}° longitude.`;
     if (item.marking_type === 'x_to_area') {
       area.textContent += ` Arrow toward ${(item.area.south + item.area.north) / 2}°, ${(item.area.west + item.area.east) / 2}°.`;
     }
@@ -91,7 +91,8 @@ form.addEventListener('submit', async (event) => {
   }
   item.latitude = item.marking_type === 'area_only' ? null : Number(item.latitude);
   item.longitude = item.marking_type === 'area_only' ? null : Number(item.longitude);
-  item.area = {};
+  item.area = {shape: item.area_shape};
+  delete item.area_shape;
   for (const key of ['south', 'north', 'west', 'east']) {
     item.area[key] = Number(item[key]);
     delete item[key];

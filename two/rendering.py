@@ -147,8 +147,9 @@ def render_outlook(outlook, period="7d"):
         left, top = project(basin, area.north, area.west)
         right, bottom = project(basin, area.south, area.east)
         # Opaque outlines preserve the exact requested risk colors.
-        draw.rectangle((left, top, right, bottom), outline="#10212C", width=7)
-        draw.rectangle((left, top, right, bottom), outline=color, width=3)
+        outline = draw.ellipse if area.shape == "ellipse" else draw.rectangle
+        outline((left, top, right, bottom), outline="#10212C", width=7)
+        outline((left, top, right, bottom), outline=color, width=3)
         if disturbance.arrow:
             start, end = disturbance.arrow
             x1, y1 = project(basin, *start)

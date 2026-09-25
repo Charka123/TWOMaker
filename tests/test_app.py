@@ -1,13 +1,13 @@
 import unittest
 
 from two import create_app
-from two.models import Basin, Disturbance, Outlook
+from two.models import Basin, Disturbance, FormationArea, Outlook
 
 
 VALID = dict(name="Invest 90L", latitude=15.5, longitude=-45.2,
              description="Disorganized showers over the central Atlantic.",
              probability_48h=20, probability_7d=50, marking_type="x_in_area",
-             area=dict(south=10, north=20, west=-50, east=-40))
+             area=dict(south=10, north=20, west=-50, east=-40, shape="rectangle"))
 
 
 class ModelTests(unittest.TestCase):
@@ -31,6 +31,20 @@ class ModelTests(unittest.TestCase):
 
     def test_probability_endpoints(self):
         Disturbance.from_dict(VALID | {"probability_48h": 0, "probability_7d": 100})
+
+    def test_ellipse_containment_and_marking_rules(self):
+        area = VALID["area"] | {"shape": "ellipse"}
+        ellipse = FormationArea(**area)
+        for point in [(15, -45), (20, -45), (15, -50)]:
+            self.assertTrue(ellipse.contains(*point))
+        self.assertFalse(ellipse.contains(19, -41))
+        item = VALID | {"area": area, "latitude": 19, "longitude": -41}
+        with self.assertRaises(ValueError):
+            Disturbance.from_dict(item)
+        moving = Disturbance.from_dict(item | {"marking_type": "x_to_area"})
+        self.assertEqual(moving.arrow, ((19, -41), (15, -45)))
+        with self.assertRaises(ValueError):
+            FormationArea(**(area | {"shape": "invalid"}))
 
     def test_basin_bounds(self):
         for bounds in [(60, 0, -100, 0), (0, 60, 0, -100),
@@ -140,6 +154,16 @@ class RouteTests(unittest.TestCase):
                 response = self.client.post("/api/outlook", json={
                     "basin_id": "north-atlantic", "disturbances": [VALID | {"area": area}]})
                 self.assertEqual(response.status_code, 400)
+
+    def test_ellipse_round_trip_and_rectangle_compatibility(self):
+        for shape in ["ellipse", "rectangle", None]:
+            area = {key: value for key, value in VALID["area"].items() if key != "shape"}
+            if shape:
+                area["shape"] = shape
+            response = self.client.post("/api/outlook", json={
+                "basin_id": "north-atlantic", "disturbances": [VALID | {"area": area}]})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["disturbances"][0]["area"]["shape"], shape or "rectangle")
 
 
 if __name__ == "__main__":
