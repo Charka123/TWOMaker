@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 import math
+from . import geometry
 
 
 def validate_number(label, value, minimum, maximum):
@@ -75,6 +76,69 @@ class FormationArea:
         return ((self.south + self.north) / 2, (self.west + self.east) / 2)
 
 
+@dataclass(frozen=True)
+class PolygonArea:
+    """A closed, simple outline with 3–500 vertices in latitude/longitude order."""
+
+    points: tuple
+    shape: str = "polygon"
+
+    def __post_init__(self):
+        if self.shape != "polygon" or not isinstance(self.points, (list, tuple)):
+            raise ValueError("Provide polygon points.")
+        if not 3 <= len(self.points) <= 500:
+            raise ValueError("Draw an area with 3–500 points.")
+        points = []
+        for point in self.points:
+            if not isinstance(point, (list, tuple)) or len(point) != 2:
+                raise ValueError("Each polygon point needs latitude and longitude.")
+            validate_number("Point latitude", point[0], -90, 90)
+            validate_number("Point longitude", point[1], -180, 180)
+            points.append(tuple(point))
+        if points[0] == points[-1]:
+            points.pop()
+        if len(set(points)) != len(points) or len(points) < 3:
+            raise ValueError("Draw at least three distinct points without repeated vertices.")
+        edges = list(zip(points, points[1:] + points[:1]))
+        for i, point in enumerate(points):
+            previous, following = points[i-1], points[(i+1) % len(points)]
+            if (geometry.on_segment(previous, point, following)
+                    or geometry.on_segment(point, following, previous)):
+                raise ValueError("Area edges must not double back. Please redraw the outline.")
+        if abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in edges)) < 1e-8:
+            raise ValueError("The drawn area must enclose a nonzero area.")
+        for i, (a, b) in enumerate(edges):
+            for j in range(i+1, len(edges)):
+                if j == i+1 or (i == 0 and j == len(edges)-1):
+                    continue
+                if geometry.intersects(a,b,*edges[j]):
+                    raise ValueError("Area edges must not cross or touch. Please redraw the outline.")
+        object.__setattr__(self, "points", tuple(points))
+
+    @property
+    def south(self):
+        return min(p[0] for p in self.points)
+
+    @property
+    def north(self):
+        return max(p[0] for p in self.points)
+
+    @property
+    def west(self):
+        return min(p[1] for p in self.points)
+
+    @property
+    def east(self):
+        return max(p[1] for p in self.points)
+
+    def contains(self, latitude, longitude):
+        return geometry.contains(self.points, latitude, longitude)
+
+    @property
+    def center(self):
+        return geometry.interior_point(self.points)
+
+
 MARKING_TYPES = {
     "area_only": "Area of interest (no X)",
     "x_to_area": "X moving into an area (arrow)",
@@ -91,7 +155,7 @@ class Disturbance:
     probability_48h: int
     probability_7d: int
     marking_type: str
-    area: FormationArea
+    area: FormationArea | PolygonArea
 
     def __post_init__(self):
         if (not isinstance(self.name, str) or not self.name.strip()
@@ -99,7 +163,7 @@ class Disturbance:
             raise ValueError("A name and description are required.")
         if not isinstance(self.marking_type, str) or self.marking_type not in MARKING_TYPES:
             raise ValueError("Select a valid marking type.")
-        if not isinstance(self.area, FormationArea):
+        if not isinstance(self.area, (FormationArea, PolygonArea)):
             raise ValueError("A formation area is required.")
         if self.marking_type == "area_only":
             if self.latitude is not None or self.longitude is not None:
@@ -126,7 +190,7 @@ class Disturbance:
         area = values.get("area")
         if not isinstance(area, dict):
             raise ValueError("Provide formation area bounds.")
-        values["area"] = FormationArea(**area)
+        values["area"] = PolygonArea(**area) if area.get("shape") == "polygon" else FormationArea(**area)
         values.setdefault("latitude", None)
         values.setdefault("longitude", None)
         return cls(**values)

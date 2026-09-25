@@ -17,6 +17,14 @@ def index():
                            marking_types=MARKING_TYPES)
 
 
+@main.get("/api/basins/<basin_id>/image")
+def basin_image(basin_id):
+    basin = current_app.extensions["basins"].get(basin_id)
+    if basin is None:
+        return jsonify(error="Unknown basin."), 404
+    return send_file(BytesIO(render_outlook(Outlook(basin))), mimetype="image/png", max_age=3600)
+
+
 def parse_outlook(payload):
     if not isinstance(payload, dict):
         raise ValueError("Submit an outlook as a JSON object.")

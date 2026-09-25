@@ -14,6 +14,12 @@ textarea { resize: vertical; }
 fieldset { border: 1px solid #d1dfe7; border-radius: 5px; margin: 0 0 1rem; padding: 1rem; min-width: 0; }
 legend { font-weight: 600; }
 #outlook-image { display: block; width: 100%; height: auto; margin: 1rem 0; border-radius: 5px; }
+#drawing-map { height: 420px; width: 100%; margin-bottom: 1rem; background: #193b55; z-index: 0; }
+#drawing-map.drawing-active { cursor: crosshair; touch-action: none; }
+.drawing-tools { display: flex; flex-wrap: wrap; gap: .5rem; }
+.drawing-tools button { padding: .5rem .7rem; }
+.drawing-tools button[aria-pressed="true"] { background: #17324a; outline: 2px solid #ca7b00; }
+.leaflet-control button, .leaflet-control a { color: #17324a; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 button { font: inherit; cursor: pointer; color: white; background: #08676d; border: 0; border-radius: 5px; padding: .7rem 1rem; }
 button:disabled { opacity: .6; cursor: wait; }

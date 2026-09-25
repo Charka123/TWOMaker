@@ -39,9 +39,12 @@ function updateMarkingFields() {
 }
 marking.addEventListener('change', updateMarkingFields);
 updateMarkingFields();
+const drawing = window.createDrawingMap(form, basin);
+imagePeriod.addEventListener('change', () => drawing.show(disturbances, imagePeriod.value));
 
 function render() {
   invalidateImage();
+  drawing.show(disturbances, imagePeriod.value);
   list.replaceChildren();
   if (!disturbances.length) {
     const empty = document.createElement('p');
@@ -58,8 +61,10 @@ function render() {
       location.textContent += ` · X: ${item.latitude}°, ${item.longitude}°`;
     }
     const area = document.createElement('p');
-    area.textContent = `${item.area.shape === 'ellipse' ? 'Oval' : 'Rectangular'} formation area: ${item.area.south}° to ${item.area.north}° latitude; ${item.area.west}° to ${item.area.east}° longitude.`;
-    if (item.marking_type === 'x_to_area') {
+    area.textContent = item.area.shape === 'polygon'
+      ? `Drawn formation area (${item.area.points.length} vertices).`
+      : `${item.area.shape === 'ellipse' ? 'Oval' : 'Rectangular'} formation area: ${item.area.south}° to ${item.area.north}° latitude; ${item.area.west}° to ${item.area.east}° longitude.`;
+    if (item.marking_type === 'x_to_area' && item.area.shape !== 'polygon') {
       area.textContent += ` Arrow toward ${(item.area.south + item.area.north) / 2}°, ${(item.area.west + item.area.east) / 2}°.`;
     }
     const description = document.createElement('p');
@@ -91,10 +96,15 @@ form.addEventListener('submit', async (event) => {
   }
   item.latitude = item.marking_type === 'area_only' ? null : Number(item.latitude);
   item.longitude = item.marking_type === 'area_only' ? null : Number(item.longitude);
-  item.area = {shape: item.area_shape};
+  try {
+    item.area = drawing.area();
+    if (!item.area) throw new Error('Enter valid area bounds.');
+  } catch (failure) {
+    error.textContent = failure.message;
+    return;
+  }
   delete item.area_shape;
   for (const key of ['south', 'north', 'west', 'east']) {
-    item.area[key] = Number(item[key]);
     delete item[key];
   }
   const submit = form.querySelector('button[type="submit"]');
@@ -112,6 +122,7 @@ form.addEventListener('submit', async (event) => {
     render();
     form.reset();
     updateMarkingFields();
+    drawing.reset();
     form.elements.name.focus();
   } catch (failure) {
     error.textContent = failure.message || 'Could not reach the server. Please try again.';
