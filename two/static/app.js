@@ -3,6 +3,22 @@ const basin = document.querySelector('#basin');
 const list = document.querySelector('#disturbances');
 const error = document.querySelector('#error');
 let disturbances = [];
+const marking = document.querySelector('#marking-type');
+const position = document.querySelector('#x-position');
+const markingHelp = document.querySelector('#marking-help');
+const markingLabels = Object.fromEntries([...marking.options].map(option => [option.value, option.text]));
+
+function updateMarkingFields() {
+  position.hidden = marking.value === 'area_only';
+  position.disabled = position.hidden;
+  markingHelp.textContent = {
+    area_only: 'An area of interest without an X or arrow.',
+    x_to_area: 'Place the X outside the area. The arrow will point toward the area’s center.',
+    x_in_area: 'Place the X inside the formation area. No arrow is needed.',
+  }[marking.value];
+}
+marking.addEventListener('change', updateMarkingFields);
+updateMarkingFields();
 
 function render() {
   list.replaceChildren();
@@ -16,7 +32,15 @@ function render() {
     const title = document.createElement('h3');
     title.textContent = item.name;
     const location = document.createElement('p');
-    location.textContent = `Latitude: ${item.latitude}° · Longitude: ${item.longitude}°`;
+    location.textContent = markingLabels[item.marking_type];
+    if (item.marking_type !== 'area_only') {
+      location.textContent += ` · X: ${item.latitude}°, ${item.longitude}°`;
+    }
+    const area = document.createElement('p');
+    area.textContent = `Formation area: ${item.area.south}° to ${item.area.north}° latitude; ${item.area.west}° to ${item.area.east}° longitude.`;
+    if (item.marking_type === 'x_to_area') {
+      area.textContent += ` Arrow toward ${(item.area.south + item.area.north) / 2}°, ${(item.area.west + item.area.east) / 2}°.`;
+    }
     const description = document.createElement('p');
     description.className = 'description';
     description.textContent = item.description;
@@ -30,7 +54,7 @@ function render() {
       disturbances.splice(index, 1);
       render();
     });
-    card.append(title, location, description, probabilities, remove);
+    card.append(title, location, area, description, probabilities, remove);
     list.append(card);
   });
 }
@@ -41,8 +65,15 @@ form.addEventListener('submit', async (event) => {
   const item = Object.fromEntries(new FormData(form));
   item.name = item.name.trim();
   item.description = item.description.trim();
-  for (const key of ['latitude', 'longitude', 'probability_48h', 'probability_7d']) {
+  for (const key of ['probability_48h', 'probability_7d']) {
     item[key] = Number(item[key]);
+  }
+  item.latitude = item.marking_type === 'area_only' ? null : Number(item.latitude);
+  item.longitude = item.marking_type === 'area_only' ? null : Number(item.longitude);
+  item.area = {};
+  for (const key of ['south', 'north', 'west', 'east']) {
+    item.area[key] = Number(item[key]);
+    delete item[key];
   }
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
@@ -58,6 +89,7 @@ form.addEventListener('submit', async (event) => {
     disturbances = result.disturbances;
     render();
     form.reset();
+    updateMarkingFields();
     form.elements.name.focus();
   } catch (failure) {
     error.textContent = failure.message || 'Could not reach the server. Please try again.';

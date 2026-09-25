@@ -31,10 +31,33 @@
       <h2 id="add-heading">Add disturbance</h2>
       <form id="disturbance-form">
         <label>Name <input name="name" required maxlength="120"></label>
-        <div class="row">
-          <label>Latitude (°) <input name="latitude" type="number" min="-90" max="90" step="any" required></label>
-          <label>Longitude (°) <input name="longitude" type="number" min="-180" max="180" step="any" required></label>
-        </div>
+        <label>Marking type
+          <select name="marking_type" id="marking-type">
+            {% for value, label in marking_types.items() %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <fieldset id="x-position" hidden disabled>
+          <legend>Current X position</legend>
+          <div class="row">
+            <label>Latitude (°) <input name="latitude" type="number" min="-90" max="90" step="any" required></label>
+            <label>Longitude (°) <input name="longitude" type="number" min="-180" max="180" step="any" required></label>
+          </div>
+        </fieldset>
+        <p id="marking-help">An area of interest without an X or arrow.</p>
+        <fieldset>
+          <legend>Formation area</legend>
+          <p>Enter rectangular bounds for now. All bounds must be inside the selected basin.</p>
+          <div class="row">
+            <label>South latitude (°) <input name="south" type="number" min="-90" max="90" step="any" required></label>
+            <label>North latitude (°) <input name="north" type="number" min="-90" max="90" step="any" required></label>
+          </div>
+          <div class="row">
+            <label>West longitude (°) <input name="west" type="number" min="-180" max="180" step="any" required></label>
+            <label>East longitude (°) <input name="east" type="number" min="-180" max="180" step="any" required></label>
+          </div>
+        </fieldset>
         <label>Description <textarea name="description" rows="4" required maxlength="5000"></textarea></label>
         <div class="row">
           <label>48-hour formation probability (%) <input name="probability_48h" type="number" min="0" max="100" step="1" required></label>

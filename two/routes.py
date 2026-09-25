@@ -4,14 +4,15 @@ from dataclasses import asdict
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
-from .models import Disturbance, Outlook
+from .models import Disturbance, Outlook, MARKING_TYPES
 
 main = Blueprint("main", __name__)
 
 
 @main.get("/")
 def index():
-    return render_template("index.html", basins=current_app.extensions["basins"].values())
+    return render_template("index.html", basins=current_app.extensions["basins"].values(),
+                           marking_types=MARKING_TYPES)
 
 
 @main.post("/api/outlook")
@@ -28,10 +29,10 @@ def validate_outlook():
             raise ValueError("Disturbances must be a list of objects.")
         outlook = Outlook(
             basin=current_app.extensions["basins"][basin_id],
-            disturbances=[Disturbance(**item) for item in items],
+            disturbances=[Disturbance.from_dict(item) for item in items],
         )
     except ValueError as error:
         return jsonify(error=str(error)), 400
     except (TypeError, AttributeError):
-        return jsonify(error="Each disturbance must include valid values for all seven fields."), 400
+        return jsonify(error="Each disturbance must include valid fields and formation area bounds."), 400
     return jsonify(asdict(outlook))
